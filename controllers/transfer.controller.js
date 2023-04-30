@@ -1,7 +1,7 @@
 const Transfer = require('../models/transfer.models');
 const { Op } = require('sequelize');
 
-exports.transferSender = async (req, res, next) => {
+exports.transferSender = async (req, res) => {
     const { transferReceiver, transferSender, amount } = req.accounts;
     const { transferNumber, transfer } = req.transferNumber;
 
@@ -33,26 +33,34 @@ exports.transferSender = async (req, res, next) => {
     }
 };
 
-exports.transferSearch = async (req, res, next) => {
+//buscar transferencias
+exports.transferSearch = async (req, res) => {
     const { account } = req.params;
 
-    const history = await Transfer.findAll({
-        where: {
-            [Op.or]: [{ senderAccount: account }, { receiverAccount: account }],
-        },
-    });
-
-    if (!history) {
-        return res.status(404).json({
-            status: 'error',
-            message: 'Sorry!, Not your have transfers, right now.',
+    try {
+        const history = await Transfer.findAll({
+            where: {
+                [Op.or]: [
+                    { senderAccount: account },
+                    { receiverAccount: account },
+                ],
+            },
         });
-    }
 
-    return res.status(200).json({
-        status: 'success',
-        message: 'These are your transfers so far',
-        results: history.length,
-        history,
-    });
+        if (!history) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Sorry!, Not your have transfers, right now.',
+            });
+        }
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'These are your transfers so far',
+            results: history.length,
+            history,
+        });
+    } catch (error) {
+        console.log(error.message);
+    }
 };

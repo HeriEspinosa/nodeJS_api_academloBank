@@ -1,12 +1,10 @@
-const Transfer = require('../models/transfer.models');
 const User = require('../models/user.models');
-const transferRandom = require('../utils/transferRandom');
 
-exports.validTransfer = async (req, res, next) => {
-    const { receiverAccount, senderAccount, amount } = req.body;
+//VALIDAR SI EXISTE LA CUENTA DE DONDE SE ENVIA
+exports.validExistReceiver = async (req, res, next) => {
+    const { receiverAccount } = req.body;
 
     try {
-        //VALIDAR SI EXISTE LA CUENTA DE DONDE SE ENVIA
         const transferReceiver = await User.findOne({
             where: {
                 account_number: receiverAccount,
@@ -20,7 +18,17 @@ exports.validTransfer = async (req, res, next) => {
             });
         }
 
-        //VALIDAR SI EXISTE LA CUENTA A DONDE SE ENVIA
+        req.transferReceiver = { transferReceiver };
+        next();
+    } catch (error) {
+        console.log(error.message);
+    }
+};
+
+//VALIDAR SI EXISTE LA CUENTA DEL REMITENTE Y SI TIENE FONDO SUFICIENTE
+exports.validExistSender = async (req, res, next) => {
+    const { senderAccount, amount } = req.body;
+    try {
         const transferSender = await User.findOne({
             where: {
                 account_number: senderAccount,
@@ -41,7 +49,19 @@ exports.validTransfer = async (req, res, next) => {
             }
         }
 
-        //VALIDAR SI LA TRANSFERENCIA ES A LA MISMA CUENTA DEL REMITENTE
+        req.accounts = { transferSender, amount };
+        next();
+    } catch (error) {
+        console.log(error.message);
+    }
+};
+
+//VALIDAR SI LA TRANSFERENCIA ES A LA MISMA CUENTA DEL REMITENTE
+exports.validTransfer = async (req, res, next) => {
+    const { transferReceiver } = req.transferReceiver;
+    const { transferSender, amount } = req.accounts;
+
+    try {
         if (transferReceiver.account_number === transferSender.account_number) {
             console.log(equalAccounts);
             return res.status(400).json({
@@ -51,30 +71,8 @@ exports.validTransfer = async (req, res, next) => {
         }
 
         req.accounts = { transferReceiver, transferSender, amount };
+        next();
     } catch (error) {
         console.log(error.message);
     }
-
-    next();
-};
-
-//CREAR LA TRANSFERENCIA
-exports.makeTransfer = async (req, res, next) => {
-    const { transferReceiver, transferSender, amount } = req.accounts;
-    try {
-        let transferNumber = transferRandom();
-
-        const transfer = await Transfer.create({
-            senderAccount: transferSender.account_number,
-            receiverAccount: transferReceiver.account_number,
-            amount,
-            transferNumber,
-        });
-
-        req.transferNumber = { transfer, transferNumber };
-    } catch (error) {
-        console.log(error.message);
-    }
-
-    next();
 };

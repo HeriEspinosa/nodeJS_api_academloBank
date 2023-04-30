@@ -17,12 +17,12 @@ exports.validExistsUser = async (req, res, next) => {
                 message: `This email: ${email} exist.`,
             });
         }
+
+        req.email = email;
+        next();
     } catch (error) {
         console.log(error.message());
     }
-
-    req.email = email;
-    next();
 };
 
 exports.validLoginUser = async (req, res, next) => {
@@ -55,9 +55,9 @@ exports.validLoginUser = async (req, res, next) => {
                 message: 'Sorry, the password not match with email 🤔',
             });
         }
+
+        next();
     } catch (error) {
         console.log(error.message());
     }
-
-    next();
 };

@@ -1,8 +1,14 @@
 const express = require('express');
+
+//middlewares
 const {
     validTransfer,
-    makeTransfer,
+    validExistReceiver,
+    validExistSender,
 } = require('../middlewares/validTransfers.middleware');
+const { createTransfer } = require('../middlewares/transfers.middleware');
+
+//controllers
 const {
     transferSender,
     transferSearch,
@@ -10,7 +16,14 @@ const {
 
 const router = express.Router();
 
-router.post('/', validTransfer, makeTransfer, transferSender);
+router.post(
+    '/',
+    validExistReceiver,
+    validExistSender,
+    validTransfer,
+    createTransfer,
+    transferSender
+);
 
 router.get('/:account', transferSearch);
 
